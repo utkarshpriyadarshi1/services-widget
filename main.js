@@ -188,6 +188,7 @@ function createWidgetWindow() {
     resizable: false,
     skipTaskbar: true,
     alwaysOnTop: true,
+    icon: path.join(__dirname, 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -364,10 +365,9 @@ app.whenReady().then(async () => {
     return;
   }
   
-  // Set up tray icon from base64 PNG (guarantees compatibility on Windows)
-  const base64Icon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAi0lEQVQ4T6WTwQ3AIAwDsf9OnasjMEJjQn2qiqo+c1Icx0k1KAYYwFqyN0t5EALi2kt2c1sIAXHtJTugzW0hBMS1l+yANreFEBDXXrID2twWPgTiwkt2QJvbQgiIay/ZAW1uCyEgrr1kB7S5LYSAuPaSHdDmthAC4tpLdkCb20IIiGsv2QEt+U/8J94X8QYx8wPz3yZpSQAAAABJRU5ErkJggg==';
-  const trayIcon = nativeImage.createFromDataURL(base64Icon);
-  tray = new Tray(trayIcon);
+  // Set up tray icon from PNG file
+  const trayIconPath = path.join(__dirname, 'tray-icon.png');
+  tray = new Tray(trayIconPath);
   tray.setToolTip('ServicePulse');
   
   // Toggle window on tray click

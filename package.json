@@ -30,7 +30,8 @@
       "target": [
         "portable"
       ],
-      "requestedExecutionLevel": "requireAdministrator"
+      "requestedExecutionLevel": "requireAdministrator",
+      "icon": "icon.png"
     },
     "files": [
       "main.js",
@@ -38,7 +39,9 @@
       "index.html",
       "index.css",
       "renderer.js",
-      "get-service-stats.ps1"
+      "get-service-stats.ps1",
+      "icon.png",
+      "tray-icon.png"
     ],
     "directories": {
       "output": "dist"

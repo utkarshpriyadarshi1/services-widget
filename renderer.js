@@ -196,7 +196,7 @@ function renderServicesList() {
   if (filtered.length === 0) {
     servicesList.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">🔍</div>
+        <div class="empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
         <span>No services found matching your criteria.</span>
       </div>
     `;
