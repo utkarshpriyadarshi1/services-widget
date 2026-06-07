@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ServicePulse - System Monitor & Service Manager</title>
+  <link rel="stylesheet" href="index.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="widget-container">
+    <!-- Header -->
+    <header class="widget-header">
+      <div class="header-main">
+        <span class="header-title">ServicePulse</span>
+        <div class="header-actions">
+          <button id="refresh-btn" class="icon-btn refresh-btn" title="Refresh Stats & Services">
+            <i class="fa-solid fa-arrows-rotate"></i>
+          </button>
+          <button id="exit-btn" class="icon-btn close-btn" title="Exit Application">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+      <div class="header-sub">
+        <span id="uptime-text"><i class="fa-regular fa-clock"></i> Uptime: --</span>
+      </div>
+    </header>
+
+    <!-- Admin Alert Banner -->
+    <div id="admin-banner" class="admin-banner hidden">
+      <span class="warning-icon"><i class="fa-solid fa-shield-halved"></i></span>
+      <div class="banner-content">
+        <span class="banner-title">Requires Administrator Rights</span>
+        <span class="banner-desc">Please relaunch to enable service controls.</span>
+      </div>
+      <button id="elevate-btn" class="elevate-btn">Relaunch</button>
+    </div>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+      <!-- CPU Stats Card -->
+      <div class="stat-card">
+        <div class="circular-progress">
+          <svg class="progress-ring" width="54" height="54">
+            <circle class="progress-ring-bg" stroke="#1f293d" stroke-width="4.5" fill="transparent" r="23" cx="27" cy="27"/>
+            <circle id="cpu-ring" class="progress-ring-fg cpu-fg" stroke="url(#cpuGrad)" stroke-width="4.5" fill="transparent" r="23" cx="27" cy="27"/>
+            <defs>
+              <linearGradient id="cpuGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#818cf8" />
+                <stop offset="100%" stop-color="#c084fc" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div id="cpu-value" class="stat-value">0%</div>
+        </div>
+        <span class="stat-label"><i class="fa-solid fa-microchip"></i> CPU</span>
+      </div>
+
+      <!-- RAM Stats Card -->
+      <div class="stat-card">
+        <div class="circular-progress">
+          <svg class="progress-ring" width="54" height="54">
+            <circle class="progress-ring-bg" stroke="#1f293d" stroke-width="4.5" fill="transparent" r="23" cx="27" cy="27"/>
+            <circle id="ram-ring" class="progress-ring-fg ram-fg" stroke="url(#ramGrad)" stroke-width="4.5" fill="transparent" r="23" cx="27" cy="27"/>
+            <defs>
+              <linearGradient id="ramGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#38bdf8" />
+                <stop offset="100%" stop-color="#818cf8" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div id="ram-value" class="stat-value">0%</div>
+        </div>
+        <span class="stat-label" id="ram-details"><i class="fa-solid fa-memory"></i> RAM</span>
+      </div>
+
+      <!-- Disk Stats Card -->
+      <div class="stat-card">
+        <div class="circular-progress">
+          <svg class="progress-ring" width="54" height="54">
+            <circle class="progress-ring-bg" stroke="#1f293d" stroke-width="4.5" fill="transparent" r="23" cx="27" cy="27"/>
+            <circle id="disk-ring" class="progress-ring-fg disk-fg" stroke="url(#diskGrad)" stroke-width="4.5" fill="transparent" r="23" cx="27" cy="27"/>
+            <defs>
+              <linearGradient id="diskGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#34d399" />
+                <stop offset="100%" stop-color="#3b82f6" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div id="disk-value" class="stat-value">0%</div>
+        </div>
+        <span class="stat-label" id="disk-details"><i class="fa-solid fa-hard-drive"></i> Disk C:</span>
+      </div>
+    </section>
+
+    <!-- Services Controls -->
+    <section class="services-section">
+      <!-- Search & Filters -->
+      <div class="controls-bar">
+        <div class="search-box">
+          <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+          <input type="text" id="search-input" placeholder="Search services..." autocomplete="off" />
+          <button id="clear-search-btn" class="clear-btn hidden">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        
+        <div class="filter-tabs">
+          <button class="filter-tab active" data-filter="all">All</button>
+          <button class="filter-tab" data-filter="running">Running</button>
+          <button class="filter-tab" data-filter="stopped">Stopped</button>
+        </div>
+      </div>
+
+      <!-- Scrollable List -->
+      <div class="services-list-container">
+        <div id="services-list" class="services-list">
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <span>Loading Windows Services...</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

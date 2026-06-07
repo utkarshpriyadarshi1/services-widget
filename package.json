@@ -1,0 +1,45 @@
+{
+  "name": "service-pulse",
+  "version": "1.0.0",
+  "description": "Windows Services and System Statistics Taskbar Widget",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win"
+  },
+  "keywords": [
+    "windows",
+    "services",
+    "system-monitor",
+    "tray-app",
+    "widget",
+    "electron"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.windows.servicepulse",
+    "productName": "ServicePulse",
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "requestedExecutionLevel": "requireAdministrator"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "index.css",
+      "renderer.js",
+      "get-service-stats.ps1"
+    ],
+    "directories": {
+      "output": "dist"
+    }
+  }
+}
