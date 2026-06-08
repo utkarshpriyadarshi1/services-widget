@@ -26,16 +26,34 @@
   "build": {
     "appId": "com.windows.servicepulse",
     "productName": "ServicePulse",
+    "copyright": "Copyright © 2026 Utkarsh Priyadarshi",
     "win": {
       "target": [
+        "nsis",
         "portable"
       ],
+      "publisherName": "Utkarsh Priyadarshi",
       "requestedExecutionLevel": "requireAdministrator",
-      "icon": "icon.png"
+      "icon": "icon.png",
+      "certificateFile": "certs/certificate.pfx",
+      "certificatePassword": "servicepulse123"
     },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ServicePulse"
+    },
+    "asar": true,
+    "asarUnpack": [
+      "get-service-stats.ps1",
+      "tray-icon.png"
+    ],
     "files": [
       "main.js",
       "preload.js",
+      "logger.js",
       "index.html",
       "index.css",
       "renderer.js",

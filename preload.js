@@ -8,6 +8,9 @@ contextBridge.exposeInMainWorld('api', {
   checkAdmin: () => ipcRenderer.invoke('check-admin'),
   relaunchAsAdmin: () => ipcRenderer.send('relaunch-as-admin'),
   closeApp: () => ipcRenderer.send('close-app'),
+  isAlwaysOnTop: () => ipcRenderer.invoke('is-always-on-top'),
+  setAlwaysOnTop: (flag) => ipcRenderer.invoke('set-always-on-top', flag),
+  openLogFile: () => ipcRenderer.invoke('open-log-file'),
   onVisibilityChange: (callback) => {
     ipcRenderer.on('window-visibility', (event, isVisible) => callback(isVisible));
   }

@@ -13,6 +13,8 @@ const adminBanner = document.getElementById('admin-banner');
 const elevateBtn = document.getElementById('elevate-btn');
 const exitBtn = document.getElementById('exit-btn');
 const refreshBtn = document.getElementById('refresh-btn');
+const pinBtn = document.getElementById('pin-btn');
+const logsBtn = document.getElementById('logs-btn');
 
 const searchInput = document.getElementById('search-input');
 const clearSearchBtn = document.getElementById('clear-search-btn');
@@ -31,8 +33,47 @@ let statsInterval = null;
 let servicesInterval = null;
 let isRefreshing = false;
 
+// Show a glassmorphic toast notification
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+
+  const icon = document.createElement('i');
+  icon.className = type === 'success'
+    ? 'fa-solid fa-circle-check toast-icon'
+    : 'fa-solid fa-circle-exclamation toast-icon';
+
+  const msgSpan = document.createElement('span');
+  msgSpan.className = 'toast-message';
+  msgSpan.textContent = message;
+
+  toast.appendChild(icon);
+  toast.appendChild(msgSpan);
+  container.appendChild(toast);
+
+  // Remove toast after animation finishes (4s total)
+  setTimeout(() => {
+    toast.remove();
+  }, 4000);
+}
+
 // Initialize
 async function init() {
+  // Sync Always on Top state
+  try {
+    const isAlwaysTop = await window.api.isAlwaysOnTop();
+    if (isAlwaysTop) {
+      pinBtn.classList.add('active');
+    } else {
+      pinBtn.classList.remove('active');
+    }
+  } catch (err) {
+    console.error('Failed to sync always on top:', err);
+  }
+
   // Check admin rights
   isAdmin = await window.api.checkAdmin();
   if (!isAdmin) {
@@ -40,6 +81,32 @@ async function init() {
   }
 
   // Setup Event Listeners
+  pinBtn.addEventListener('click', async () => {
+    const isCurrentlyTop = pinBtn.classList.contains('active');
+    const targetState = !isCurrentlyTop;
+    const success = await window.api.setAlwaysOnTop(targetState);
+    if (success) {
+      if (targetState) {
+        pinBtn.classList.add('active');
+        showToast('Always on Top enabled.', 'success');
+      } else {
+        pinBtn.classList.remove('active');
+        showToast('Always on Top disabled.', 'success');
+      }
+    } else {
+      showToast('Failed to toggle Always on Top.', 'error');
+    }
+  });
+
+  logsBtn.addEventListener('click', async () => {
+    const success = await window.api.openLogFile();
+    if (success) {
+      showToast('Opened log file.', 'success');
+    } else {
+      showToast('Failed to open log file.', 'error');
+    }
+  });
+
   exitBtn.addEventListener('click', () => {
     window.api.closeApp();
   });
@@ -101,7 +168,6 @@ async function init() {
 
   // Initial load
   await updateAllData();
-  startPolling();
 }
 
 // Update all stats and services
@@ -324,7 +390,10 @@ function renderServicesList() {
       const res = await window.api.executeAction(s.Name, s.DisplayName || s.Name, action);
       setLoading(card, false);
       if (res.success) {
+        showToast(`${s.DisplayName || s.Name} has been ${action === 'Stop' ? 'stopped' : 'started'}.`, 'success');
         updateServices();
+      } else {
+        showToast(`Failed to ${action.toLowerCase()} service: ${res.error}`, 'error');
       }
     });
 
@@ -333,7 +402,10 @@ function renderServicesList() {
       const res = await window.api.executeAction(s.Name, s.DisplayName || s.Name, 'Restart');
       setLoading(card, false);
       if (res.success) {
+        showToast(`Restarted ${s.DisplayName || s.Name} successfully.`, 'success');
         updateServices();
+      } else {
+        showToast(`Failed to restart service: ${res.error}`, 'error');
       }
     });
 
@@ -342,8 +414,10 @@ function renderServicesList() {
       const res = await window.api.executeAction(s.Name, s.DisplayName || s.Name, 'SetStartupType', select.value);
       setLoading(card, false);
       if (res.success) {
+        showToast(`Startup type of ${s.DisplayName || s.Name} set to ${select.value}.`, 'success');
         updateServices();
       } else {
+        showToast(`Failed to set startup type: ${res.error}`, 'error');
         // Revert selection if failed
         select.value = startType === 2 ? 'Automatic' : (startType === 3 ? 'Manual' : 'Disabled');
       }

@@ -111,11 +111,41 @@ body {
   transition: all 0.2s ease;
 }
 
-.close-btn, .refresh-btn {
+.close-btn, .refresh-btn, .pin-btn, .logs-btn {
   width: 24px;
   height: 24px;
   border-radius: 6px;
   cursor: pointer;
+}
+
+.logs-btn {
+  font-size: 0.82rem;
+}
+
+.logs-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--accent);
+}
+
+.pin-btn {
+  font-size: 0.8rem;
+  /* Rotate slightly to look like a standard pin */
+  transform: rotate(45deg);
+}
+
+.pin-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+}
+
+.pin-btn.active {
+  color: var(--accent);
+}
+
+.pin-btn.active:hover {
+  color: var(--accent-hover);
+  /* Keep rotation when active */
+  transform: rotate(45deg) scale(1.05);
 }
 
 .close-btn {
@@ -676,4 +706,95 @@ body {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Stat Details underneath labels */
+.stat-details {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Toast Notifications Container */
+.toast-container {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Glassmorphic Toast Design */
+.toast {
+  background: rgba(13, 20, 35, 0.92);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text-main);
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  pointer-events: auto;
+  animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1), toastFadeOut 0.3s ease-out 3.7s forwards;
+}
+
+.toast.toast-success {
+  border-left: 3px solid var(--green);
+}
+
+.toast.toast-error {
+  border-left: 3px solid var(--red);
+}
+
+.toast-icon {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.toast-success .toast-icon {
+  color: var(--green);
+}
+
+.toast-error .toast-icon {
+  color: var(--red);
+}
+
+.toast-message {
+  flex: 1;
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: normal;
+  word-break: break-word;
+}
+
+@keyframes toastSlideIn {
+  from {
+    transform: translateY(15px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toastFadeOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
 }

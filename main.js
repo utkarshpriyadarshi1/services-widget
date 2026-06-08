@@ -1,12 +1,36 @@
-const { app, Tray, Menu, BrowserWindow, screen, dialog, nativeImage, ipcMain } = require('electron');
+const { app, Tray, Menu, BrowserWindow, screen, dialog, nativeImage, ipcMain, shell } = require('electron');
 const { exec } = require('child_process');
 const os = require('os');
 const path = require('path');
+const fs = require('fs');
+const logger = require('./logger');
+
+// Global Error Handlers
+process.on('uncaughtException', (error) => {
+  logger.logError('Uncaught Exception in Main Process', error);
+});
+
+process.on('unhandledRejection', (reason) => {
+  logger.logError('Unhandled Promise Rejection in Main Process', reason);
+});
 
 // Prevent multiple instances
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
+  return;
+}
+
+// Disable hardware acceleration to ensure stable transparent window rendering on Windows
+app.disableHardwareAcceleration();
+
+// Resolve paths for unpacked assets (get-service-stats.ps1 & tray-icon.png) in production
+function getAssetPath(filename) {
+  const isPackaged = app.isPackaged;
+  if (isPackaged) {
+    return path.join(process.resourcesPath, 'app.asar.unpacked', filename);
+  }
+  return path.join(__dirname, filename);
 }
 
 let tray = null;
@@ -21,6 +45,7 @@ function checkAdminPrivileges() {
   return new Promise((resolve) => {
     exec('net session', (err) => {
       isAdmin = !err;
+      logger.logInfo(`Privilege check: isAdmin = ${isAdmin}`);
       resolve(isAdmin);
     });
   });
@@ -37,10 +62,13 @@ function relaunchAsAdmin() {
     cmd = `Start-Process -FilePath '${process.execPath}' -ArgumentList '${app.getAppPath()}' -Verb RunAs`;
   }
   
+  logger.logInfo(`Relaunching application as Admin. Command: ${cmd}`);
   exec(`powershell -NoProfile -ExecutionPolicy Bypass -Command "${cmd}"`, (err) => {
     if (!err) {
+      logger.logInfo('Relaunch command successful, exiting user-privilege instance.');
       app.quit();
     } else {
+      logger.logError('UAC Relaunch failed to start', err);
       dialog.showErrorBox('Elevation Failed', 'Could not relaunch the application with Administrator privileges.');
     }
   });
@@ -109,7 +137,7 @@ function refreshDiskStats() {
   
   exec(`powershell -NoProfile -ExecutionPolicy Bypass -Command "${cmd}"`, (err, stdout) => {
     if (err) {
-      console.error('Error fetching disk space:', err.message);
+      logger.logError('Error fetching disk space stats', err);
       return;
     }
     
@@ -130,7 +158,7 @@ function refreshDiskStats() {
         };
       }
     } catch (parseError) {
-      console.error('Error parsing disk space JSON:', parseError.message);
+      logger.logError('Error parsing disk space JSON', parseError);
     }
   });
 }
@@ -142,7 +170,7 @@ function fetchServicesRaw() {
     
     exec(`powershell -NoProfile -ExecutionPolicy Bypass -Command "${cmd}"`, { maxBuffer: 1024 * 1024 * 10 }, (err, stdout) => {
       if (err) {
-        console.error('Error fetching services raw:', err.message);
+        logger.logError('Error fetching raw services list', err);
         return resolve([]);
       }
       try {
@@ -150,7 +178,7 @@ function fetchServicesRaw() {
         const services = Array.isArray(data) ? data : [data];
         resolve(services.filter(s => s && (s.Name || s.DisplayName)));
       } catch (parseError) {
-        console.error('Error parsing services JSON in main:', parseError.message);
+        logger.logError('Error parsing services JSON in main', parseError);
         resolve([]);
       }
     });
@@ -160,17 +188,17 @@ function fetchServicesRaw() {
 // Fetch process memory usage of running services via local ps1 script
 function fetchServiceStats() {
   return new Promise((resolve) => {
-    const scriptPath = path.join(__dirname, 'get-service-stats.ps1');
+    const scriptPath = getAssetPath('get-service-stats.ps1');
     exec(`powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}"`, { maxBuffer: 1024 * 1024 * 10 }, (err, stdout) => {
       if (err) {
-        console.error('Error running get-service-stats.ps1:', err.message);
+        logger.logError('Error running get-service-stats.ps1', err);
         return resolve([]);
       }
       try {
         const parsed = JSON.parse(stdout.trim());
         resolve(Array.isArray(parsed) ? parsed : [parsed]);
       } catch (parseError) {
-        console.error('Error parsing service stats JSON:', parseError.message);
+        logger.logError('Error parsing service stats JSON', parseError);
         resolve([]);
       }
     });
@@ -281,6 +309,30 @@ function positionWindow() {
 }
 
 // IPC Handlers
+ipcMain.handle('is-always-on-top', () => {
+  if (mainWindow) {
+    return mainWindow.isAlwaysOnTop();
+  }
+  return true; // Default to true
+});
+
+ipcMain.handle('set-always-on-top', (event, flag) => {
+  if (mainWindow) {
+    mainWindow.setAlwaysOnTop(flag);
+    return true;
+  }
+  return false;
+});
+
+ipcMain.handle('open-log-file', () => {
+  const logPath = logger.getLogPath();
+  if (logPath && fs.existsSync(logPath)) {
+    shell.openPath(logPath);
+    return true;
+  }
+  return false;
+});
+
 ipcMain.handle('get-stats', async () => {
   const cpu = await getCPUUsage();
   const memory = getMemoryUsage();
@@ -318,6 +370,7 @@ ipcMain.handle('get-services', async () => {
 });
 
 ipcMain.handle('execute-action', async (event, { name, displayName, action, param }) => {
+  logger.logInfo(`Executing service action: ${action} on service '${name}' (${displayName})${param ? ' with parameter: ' + param : ''}`);
   return new Promise((resolve) => {
     let cmd = '';
     
@@ -334,8 +387,10 @@ ipcMain.handle('execute-action', async (event, { name, displayName, action, para
     exec(`powershell -NoProfile -ExecutionPolicy Bypass -Command "${cmd}"`, (err, stdout, stderr) => {
       if (err) {
         const errMsg = stderr ? stderr.trim() : err.message;
+        logger.logError(`Service action failed: ${action} on '${name}'`, new Error(errMsg));
         resolve({ success: false, error: errMsg });
       } else {
+        logger.logInfo(`Service action succeeded: ${action} on '${name}'`);
         resolve({ success: true });
       }
     });
@@ -352,11 +407,16 @@ ipcMain.on('relaunch-as-admin', () => {
 });
 
 ipcMain.on('close-app', () => {
+  logger.logInfo('Application exit requested via UI.');
   app.quit();
 });
 
 // App initialization
 app.whenReady().then(async () => {
+  // Initialize logger
+  logger.initLogger();
+  logger.logInfo('ServicePulse starting...');
+
   // Check admin status first; auto-elevate if running in user mode
   await checkAdminPrivileges();
   
@@ -365,8 +425,8 @@ app.whenReady().then(async () => {
     return;
   }
   
-  // Set up tray icon from PNG file
-  const trayIconPath = path.join(__dirname, 'tray-icon.png');
+  // Set up tray icon from PNG file (packaged via asarUnpack so Electron can resolve path)
+  const trayIconPath = getAssetPath('tray-icon.png');
   tray = new Tray(trayIconPath);
   tray.setToolTip('ServicePulse');
   
@@ -377,6 +437,13 @@ app.whenReady().then(async () => {
 
   // Create initial window (hidden)
   createWidgetWindow();
+
+  // Show window on launch to let the user know the widget is running
+  setTimeout(() => {
+    if (mainWindow && !mainWindow.isVisible()) {
+      toggleWindow();
+    }
+  }, 1000);
 
   // Disk background polling
   refreshDiskStats();

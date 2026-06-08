@@ -17,6 +17,12 @@
       <div class="header-main">
         <span class="header-title">ServicePulse</span>
         <div class="header-actions">
+          <button id="logs-btn" class="icon-btn logs-btn" title="Open Log File">
+            <i class="fa-solid fa-file-shield"></i>
+          </button>
+          <button id="pin-btn" class="icon-btn pin-btn active" title="Toggle Always on Top">
+            <i class="fa-solid fa-thumbtack"></i>
+          </button>
           <button id="refresh-btn" class="icon-btn refresh-btn" title="Refresh Stats & Services">
             <i class="fa-solid fa-arrows-rotate"></i>
           </button>
@@ -75,7 +81,8 @@
           </svg>
           <div id="ram-value" class="stat-value">0%</div>
         </div>
-        <span class="stat-label" id="ram-details"><i class="fa-solid fa-memory"></i> RAM</span>
+        <span class="stat-label"><i class="fa-solid fa-memory"></i> RAM</span>
+        <span id="ram-details" class="stat-details">0.0/0.0 GB</span>
       </div>
 
       <!-- Disk Stats Card -->
@@ -93,7 +100,8 @@
           </svg>
           <div id="disk-value" class="stat-value">0%</div>
         </div>
-        <span class="stat-label" id="disk-details"><i class="fa-solid fa-hard-drive"></i> Disk C:</span>
+        <span class="stat-label"><i class="fa-solid fa-hard-drive"></i> Disk C:</span>
+        <span id="disk-details" class="stat-details">0 GB Free</span>
       </div>
     </section>
 
@@ -127,6 +135,9 @@
       </div>
     </section>
   </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
 
   <script src="renderer.js"></script>
 </body>
