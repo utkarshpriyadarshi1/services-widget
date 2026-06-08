@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('api', {
   checkAdmin: () => ipcRenderer.invoke('check-admin'),
   relaunchAsAdmin: () => ipcRenderer.send('relaunch-as-admin'),
   closeApp: () => ipcRenderer.send('close-app'),
+  minimizeApp: () => ipcRenderer.send('minimize-app'),
   isAlwaysOnTop: () => ipcRenderer.invoke('is-always-on-top'),
   setAlwaysOnTop: (flag) => ipcRenderer.invoke('set-always-on-top', flag),
   openLogFile: () => ipcRenderer.invoke('open-log-file'),

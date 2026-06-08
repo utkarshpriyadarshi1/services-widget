@@ -1,12 +1,14 @@
 {
   "name": "service-pulse",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Windows Services and System Statistics Taskbar Widget",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "predist": "node generate-cert.js",
+    "prebuild": "node generate-cert.js",
     "dist": "electron-builder --win",
-    "build": "npm run dist && explorer.exe dist",
+    "build": "npm --no-git-tag-version version patch && npm run dist && explorer.exe dist",
     "open:dist": "explorer.exe dist"
   },
   "keywords": [

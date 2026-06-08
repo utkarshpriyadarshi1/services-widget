@@ -12,6 +12,7 @@ const uptimeText = document.getElementById('uptime-text');
 const adminBanner = document.getElementById('admin-banner');
 const elevateBtn = document.getElementById('elevate-btn');
 const exitBtn = document.getElementById('exit-btn');
+const minimizeBtn = document.getElementById('minimize-btn');
 const refreshBtn = document.getElementById('refresh-btn');
 const pinBtn = document.getElementById('pin-btn');
 const logsBtn = document.getElementById('logs-btn');
@@ -109,6 +110,10 @@ async function init() {
 
   exitBtn.addEventListener('click', () => {
     window.api.closeApp();
+  });
+
+  minimizeBtn.addEventListener('click', () => {
+    window.api.minimizeApp();
   });
 
   elevateBtn.addEventListener('click', () => {
@@ -246,7 +251,10 @@ function renderServicesList() {
   const filtered = servicesCache.filter(s => {
     const displayName = (s.DisplayName || '').toLowerCase();
     const realName = (s.Name || '').toLowerCase();
-    const matchesSearch = displayName.includes(searchKeyword) || realName.includes(searchKeyword);
+    const pidStr = s.ProcessId ? String(s.ProcessId) : '';
+    const matchesSearch = displayName.includes(searchKeyword) || 
+                          realName.includes(searchKeyword) || 
+                          pidStr.includes(searchKeyword);
     
     if (!matchesSearch) return false;
     

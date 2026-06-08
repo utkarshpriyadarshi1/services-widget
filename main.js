@@ -365,6 +365,12 @@ ipcMain.handle('open-log-file', () => {
   return false;
 });
 
+ipcMain.on('minimize-app', () => {
+  if (mainWindow) {
+    mainWindow.minimize();
+  }
+});
+
 ipcMain.handle('get-stats', async () => {
   const cpu = await getCPUUsage();
   const memory = getMemoryUsage();
