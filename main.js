@@ -226,10 +226,42 @@ function createWidgetWindow() {
 
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
-  // Automatically hide when clicking outside the window
+  // Mirror renderer logs and capture errors/warnings
+  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+    const levelStr = ['DEBUG', 'INFO', 'WARN', 'ERROR'][level] || 'INFO';
+    const cleanSource = sourceId ? path.basename(sourceId) : 'unknown';
+    if (level === 3) {
+      logger.logError(`[RENDERER] ${message} (${cleanSource}:${line})`);
+    } else if (level === 2) {
+      logger.logWarn(`[RENDERER] ${message} (${cleanSource}:${line})`);
+    } else {
+      logger.logInfo(`[RENDERER] ${message} (${cleanSource}:${line})`);
+    }
+  });
+
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    logger.logError(`Renderer failed to load: ${errorDescription} (Code: ${errorCode}, URL: ${validatedURL})`);
+  });
+
+  mainWindow.on('unresponsive', () => {
+    logger.logWarn('Renderer window became unresponsive.');
+  });
+
+  mainWindow.webContents.on('render-process-gone', (event, details) => {
+    logger.logError(`Renderer process terminated unexpectedly: reason=${details.reason}, exitCode=${details.exitCode}`);
+  });
+
+  // Automatically hide when clicking outside the window, unless always on top (pinned) is active
   mainWindow.on('blur', () => {
     if (mainWindow) {
-      mainWindow.hide();
+      try {
+        if (!mainWindow.isAlwaysOnTop()) {
+          mainWindow.hide();
+        }
+      } catch (err) {
+        logger.logError('Error checking always-on-top in blur handler', err);
+        mainWindow.hide();
+      }
     }
   });
 
@@ -417,13 +449,8 @@ app.whenReady().then(async () => {
   logger.initLogger();
   logger.logInfo('ServicePulse starting...');
 
-  // Check admin status first; auto-elevate if running in user mode
+  // Check admin status
   await checkAdminPrivileges();
-  
-  if (!isAdmin) {
-    relaunchAsAdmin();
-    return;
-  }
   
   // Set up tray icon from PNG file (packaged via asarUnpack so Electron can resolve path)
   const trayIconPath = getAssetPath('tray-icon.png');
